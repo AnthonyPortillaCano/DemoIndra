@@ -1,0 +1,5 @@
+- [x] Proyecto creado en c:\DemoIndra\backend con estructura inicial, dependencias y configuración.
+- [ ] Definir modelos y lógica de integración AWS (SNS, SQS, EventBridge, RDS).
+- [ ] Implementar documentación OpenAPI/Swagger.
+- [ ] Agregar pruebas unitarias.
+- [ ] Completar documentación de uso.

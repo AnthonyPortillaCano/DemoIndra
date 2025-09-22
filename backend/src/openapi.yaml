@@ -1,0 +1,71 @@
+openapi: 3.0.3
+info:
+  title: Appointment Backend API
+  version: 1.0.0
+  description: API para agendamiento de citas médicas
+servers:
+  - url: /
+paths:
+  /appointments:
+    post:
+      summary: Crear cita médica
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                insuredId:
+                  type: string
+                  example: "01234"
+                scheduleId:
+                  type: integer
+                  example: 100
+                countryISO:
+                  type: string
+                  enum: [PE, CL]
+                  example: "PE"
+      responses:
+        '202':
+          description: Agendamiento en proceso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  appointmentId:
+                    type: string
+  /appointments/{insuredId}:
+    get:
+      summary: Listar citas por asegurado
+      parameters:
+        - name: insuredId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Listado de citas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    insuredId:
+                      type: string
+                    scheduleId:
+                      type: integer
+                    countryISO:
+                      type: string
+                    status:
+                      type: string
+                    createdAt:
+                      type: string
+                    appointmentId:
+                      type: string

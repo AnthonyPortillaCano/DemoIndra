@@ -1,0 +1,124 @@
+service: appointment-backend
+plugins:
+  - serverless-offline
+custom:
+  serverless-offline:
+    useChildProcesses: false
+    noPrependStageInUrl: true
+    require:
+      - ts-node/register
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  stage: dev
+  environment:
+    DYNAMODB_TABLE: Appointments
+    SNS_TOPIC_PE: appointment-pe-topic
+    SNS_TOPIC_CL: appointment-cl-topic
+    SQS_PE: appointment-pe-queue
+    SQS_CL: appointment-cl-queue
+    EVENT_BRIDGE: appointment-event-bridge
+    SQS_FINAL: appointment-final-queue
+    MYSQL_PE_HOST: <replace-with-pe-host>
+    MYSQL_CL_HOST: <replace-with-cl-host>
+    MYSQL_USER: <replace-with-user>
+    MYSQL_PASSWORD: <replace-with-password>
+    MYSQL_DATABASE: <replace-with-db>
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:PutItem
+        - dynamodb:Query
+        - dynamodb:GetItem
+        - dynamodb:UpdateItem
+      Resource:
+        - arn:aws:dynamodb:${self:provider.region}:*:table/Appointments
+    - Effect: Allow
+      Action:
+        - sns:Publish
+      Resource:
+        - arn:aws:sns:${self:provider.region}:*:appointment-pe-topic
+        - arn:aws:sns:${self:provider.region}:*:appointment-cl-topic
+    - Effect: Allow
+      Action:
+        - sqs:SendMessage
+        - sqs:ReceiveMessage
+        - sqs:DeleteMessage
+        - sqs:GetQueueAttributes
+      Resource:
+        - arn:aws:sqs:${self:provider.region}:*:appointment-pe-queue
+        - arn:aws:sqs:${self:provider.region}:*:appointment-cl-queue
+        - arn:aws:sqs:${self:provider.region}:*:appointment-final-queue
+    - Effect: Allow
+      Action:
+        - rds:DescribeDBInstances
+        - rds:Connect
+      Resource: "*"
+
+functions:
+  appointment:
+    handler: src/handlers/appointment.handler
+    events:
+      - http:
+          path: appointments
+          method: post
+      - http:
+          path: appointments/{insuredId}
+          method: get
+  appointment_pe:
+    handler: src/handlers/appointment_pe.handler
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt: [AppointmentPEQueue, Arn]
+  appointment_cl:
+    handler: src/handlers/appointment_cl.handler
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt: [AppointmentCLQueue, Arn]
+
+resources:
+  Resources:
+    AppointmentsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Appointments
+        AttributeDefinitions:
+          - AttributeName: insuredId
+            AttributeType: S
+          - AttributeName: scheduleId
+            AttributeType: N
+        KeySchema:
+          - AttributeName: insuredId
+            KeyType: HASH
+          - AttributeName: scheduleId
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+    AppointmentPEQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: appointment-pe-queue
+    AppointmentCLQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: appointment-cl-queue
+    AppointmentFinalQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: appointment-final-queue
+    AppointmentPETopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: appointment-pe-topic
+    AppointmentCLTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: appointment-cl-topic
+    AppointmentEventBridge:
+      Type: AWS::Events::EventBus
+      Properties:
+        Name: appointment-event-bridge

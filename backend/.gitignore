@@ -1,0 +1,29 @@
+# Node.js
+node_modules/
+dist/
+.env
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Serverless
+.serverless/
+
+# VSCode
+.vscode/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage/
+
+# TypeScript
+*.tsbuildinfo
+
+# AWS credentials (nunca subas tus claves)
+.aws/
