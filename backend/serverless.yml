@@ -16,8 +16,8 @@ provider:
   stage: dev
   environment:
     DYNAMODB_TABLE: Appointments
-    SNS_TOPIC_PE: appointment-pe-topic
-    SNS_TOPIC_CL: appointment-cl-topic
+    SNS_TOPIC_PE: arn:aws:sns:${self:provider.region}:489975610834:appointment-pe-topic
+    SNS_TOPIC_CL: arn:aws:sns:${self:provider.region}:489975610834:appointment-cl-topic
     SQS_PE: appointment-pe-queue
     SQS_CL: appointment-cl-queue
     EVENT_BRIDGE: appointment-event-bridge
@@ -60,7 +60,7 @@ provider:
 
 functions:
   appointment:
-    handler: src/handlers/appointment.handler
+    handler: dist/handlers/appointment.handler
     events:
       - http:
           path: appointments
@@ -122,3 +122,11 @@ resources:
       Type: AWS::Events::EventBus
       Properties:
         Name: appointment-event-bridge
+package:
+  include:
+    - dist/**
+    - node_modules/**
+  exclude:
+    - src/**
+    - .serverless/**
+    - .git/**
